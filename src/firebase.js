@@ -1,16 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getAnalytics } from 'firebase/analytics';
 
 // Your web app's Firebase configuration
-// TODO: Replace with your actual Firebase config from the Firebase Console
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "mentzer-tracker.firebaseapp.com",
-  projectId: "mentzer-tracker",
-  storageBucket: "mentzer-tracker.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBb1cppePmh5lCdao6w_4lUZzTdrhCp_YE",
+  authDomain: "gym-app-e8c81.firebaseapp.com",
+  projectId: "gym-app-e8c81",
+  storageBucket: "gym-app-e8c81.firebasestorage.app",
+  messagingSenderId: "887900279912",
+  appId: "1:887900279912:web:72ced031b92cbd7f4e57dd",
+  measurementId: "G-RJPQ0N1SYR"
 };
 
 // Initialize Firebase
@@ -19,5 +20,6 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 const db = getFirestore(app);
 const auth = getAuth(app);
+const analytics = getAnalytics(app);
 
-export { db, auth }; 
+export { db, auth, analytics }; 
