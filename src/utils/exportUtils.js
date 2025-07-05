@@ -6,7 +6,7 @@ export const exportToCSV = (workouts) => {
   }
 
   // Create CSV header
-  const csvHeader = 'Date,Bodyweight (kg),Exercise,Weight,Reps,Notes\n';
+  const csvHeader = 'Date,Bodyweight (lbs),Exercise,Weight,Reps,Notes\n';
 
   // Create CSV rows
   const csvRows = workouts.map(workout => {

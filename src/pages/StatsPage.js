@@ -145,7 +145,7 @@ function StatsPage() {
     labels: workouts.map(w => new Date(w.date).toLocaleDateString()),
     datasets: [
       {
-        label: 'Bodyweight (kg)',
+        label: 'Bodyweight (lbs)',
         data: workouts.map(w => w.bodyweight),
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -162,7 +162,7 @@ function StatsPage() {
       labels: exercise.data.map(d => new Date(d.date).toLocaleDateString()),
       datasets: [
         {
-          label: exercise.data[0]?.weight === 'BW' ? 'Reps' : 'Volume (kg × reps)',
+          label: exercise.data[0]?.weight === 'BW' ? 'Reps' : 'Volume (lbs × reps)',
           data: exercise.data.map(d => d.volume),
           borderColor: 'rgb(255, 99, 132)',
           backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -409,7 +409,7 @@ function StatsPage() {
                         secondary={
                           <>
                             <Typography component="span" variant="body2">
-                              {data.weight === 'BW' ? 'Bodyweight' : `${data.weight} kg`} × {data.reps} reps
+                              {data.weight === 'BW' ? 'Bodyweight' : `${data.weight} lbs`} × {data.reps} reps
                               {data.weight !== 'BW' && ` (${data.score} total volume)`}
                             </Typography>
                             <Typography component="p" variant="body2" color="text.secondary">

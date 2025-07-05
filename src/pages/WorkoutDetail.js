@@ -111,7 +111,7 @@ function WorkoutDetail() {
           {formatDate(workout.date)}
         </Typography>
         <Typography variant="body1" gutterBottom>
-          Bodyweight: {workout.bodyweight} kg
+          Bodyweight: {workout.bodyweight} lbs
         </Typography>
       </Paper>
 
@@ -128,7 +128,7 @@ function WorkoutDetail() {
                 secondary={
                   <>
                     <Typography component="span" variant="body2">
-                      {exercise.weight === 'BW' ? 'Bodyweight' : `${exercise.weight} kg`} × {exercise.reps} reps
+                      {exercise.weight === 'BW' ? 'Bodyweight' : `${exercise.weight} lbs`} × {exercise.reps} reps
                     </Typography>
                     {exercise.notes && (
                       <Typography component="p" variant="body2" color="text.secondary">

@@ -143,7 +143,7 @@ function AddWorkout() {
               <TextField
                 fullWidth
                 type="number"
-                label="Bodyweight (kg)"
+                label="Bodyweight (lbs)"
                 value={workout.bodyweight}
                 onChange={(e) => setWorkout({ ...workout, bodyweight: e.target.value })}
               />
@@ -168,7 +168,7 @@ function AddWorkout() {
                 <Grid item xs={12} sm={3}>
                   <TextField
                     fullWidth
-                    label="Weight (kg or BW)"
+                    label="Weight (lbs or BW)"
                     value={exercise.weight}
                     onChange={(e) => handleExerciseChange(index, 'weight', e.target.value)}
                   />
