@@ -35,7 +35,6 @@ export const addWorkout = (workout) => {
   const newWorkout = {
     ...workout,
     id: uuidv4(),
-    createdAt: new Date().toISOString(),
     date: new Date(workout.date).toISOString()
   };
   
@@ -56,7 +55,6 @@ export const updateWorkout = (id, updatedWorkout) => {
   const workout = {
     ...updatedWorkout,
     id,
-    updatedAt: new Date().toISOString(),
     date: new Date(updatedWorkout.date).toISOString()
   };
   
