@@ -124,7 +124,7 @@ function Home() {
                     </Typography>
                   }
                   secondary={
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" component="span">
                       Bodyweight: {workout.bodyweight} lbs • {workout.exercises.length} exercise{workout.exercises.length !== 1 ? 's' : ''}
                     </Typography>
                   }

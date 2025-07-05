@@ -131,7 +131,7 @@ function WorkoutDetail() {
                       {exercise.weight === 'BW' ? 'Bodyweight' : `${exercise.weight} lbs`} × {exercise.reps} reps
                     </Typography>
                     {exercise.notes && (
-                      <Typography component="p" variant="body2" color="text.secondary">
+                      <Typography component="div" variant="body2" color="text.secondary">
                         Notes: {exercise.notes}
                       </Typography>
                     )}

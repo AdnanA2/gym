@@ -412,7 +412,7 @@ function StatsPage() {
                               {data.weight === 'BW' ? 'Bodyweight' : `${data.weight} lbs`} × {data.reps} reps
                               {data.weight !== 'BW' && ` (${data.score} total volume)`}
                             </Typography>
-                            <Typography component="p" variant="body2" color="text.secondary">
+                            <Typography component="div" variant="body2" color="text.secondary">
                               Achieved on {new Date(data.date).toLocaleDateString()}
                             </Typography>
                           </>
