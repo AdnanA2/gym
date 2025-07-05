@@ -15,7 +15,7 @@ import {
   Skeleton
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { getAllWorkouts } from '../utils/api';
+import { getAllWorkouts } from '../utils/localStorage';
 
 function Home() {
   const [workouts, setWorkouts] = useState([]);
@@ -28,7 +28,7 @@ function Home() {
       try {
         setLoading(true);
         setError('');
-        const data = await getAllWorkouts();
+        const data = getAllWorkouts();
         setWorkouts(data);
       } catch (error) {
         console.error('Error fetching workouts:', error);
@@ -40,8 +40,8 @@ function Home() {
     fetchWorkouts();
   }, []);
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'

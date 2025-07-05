@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -6,41 +5,17 @@ import {
   Typography,
   Button,
   IconButton,
-  Menu,
-  MenuItem,
-  Box,
-  Avatar
+  Box
 } from '@mui/material';
 import {
   Home as HomeIcon,
   Add as AddIcon,
-  BarChart as StatsIcon,
-  AccountCircle as AccountIcon
+  BarChart as StatsIcon
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser, logout } = useAuth();
-  const [anchorEl, setAnchorEl] = useState(null);
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      handleMenuClose();
-    } catch (error) {
-      console.error('Failed to log out:', error);
-    }
-  };
 
   const navItems = [
     { label: 'Home', icon: <HomeIcon />, path: '/' },
@@ -107,45 +82,6 @@ const Navbar = () => {
               {item.icon}
             </IconButton>
           ))}
-        </Box>
-
-        <Box sx={{ ml: 2 }}>
-          <IconButton
-            size="large"
-            aria-label="account of current user"
-            aria-controls="menu-appbar"
-            aria-haspopup="true"
-            onClick={handleMenuOpen}
-            color="inherit"
-          >
-            {currentUser?.photoURL ? (
-              <Avatar src={currentUser.photoURL} sx={{ width: 32, height: 32 }} />
-            ) : (
-              <AccountIcon />
-            )}
-          </IconButton>
-          <Menu
-            id="menu-appbar"
-            anchorEl={anchorEl}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
-            <MenuItem disabled>
-              <Typography variant="body2" color="text.secondary">
-                {currentUser?.email}
-              </Typography>
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
-          </Menu>
         </Box>
       </Toolbar>
     </AppBar>
