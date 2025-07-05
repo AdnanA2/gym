@@ -1,5 +1,9 @@
 # Mentzer Tracker 🏋️
 
+## Live Demo
+
+Try it live here: https://mentzer-workout-tracker.vercel.app
+
 Mentzer Tracker is a simple workout tracking app I built with React. You can log your workouts, track your bodyweight and exercises, and see your progress in clean charts. It works right in the browser with no login and no internet needed.
 
 ## Why I Built This
