@@ -85,18 +85,35 @@ export const generateWorkoutSummary = (workouts) => {
   }
 
   const exerciseFrequency = {};
-  let totalVolume = 0;
+  const exerciseStats = {};
   let totalExercises = 0;
+  let totalSets = 0;
 
   workouts.forEach(workout => {
     workout.exercises.forEach(exercise => {
       const exerciseName = exercise.name.toLowerCase().trim();
       exerciseFrequency[exerciseName] = (exerciseFrequency[exerciseName] || 0) + 1;
       
-      if (exercise.weight !== 'BW') {
-        totalVolume += exercise.weight * exercise.reps;
+      // Track highest weight for each exercise
+      if (!exerciseStats[exerciseName]) {
+        exerciseStats[exerciseName] = {
+          name: exercise.name,
+          highestWeight: exercise.weight,
+          bestReps: exercise.reps
+        };
+      } else {
+        if (exercise.weight !== 'BW' && exerciseStats[exerciseName].highestWeight !== 'BW') {
+          if (exercise.weight > exerciseStats[exerciseName].highestWeight) {
+            exerciseStats[exerciseName].highestWeight = exercise.weight;
+          }
+        }
+        if (exercise.reps > exerciseStats[exerciseName].bestReps) {
+          exerciseStats[exerciseName].bestReps = exercise.reps;
+        }
       }
+      
       totalExercises++;
+      totalSets++;
     });
   });
 
@@ -105,12 +122,15 @@ export const generateWorkoutSummary = (workouts) => {
     { name: '', count: 0 }
   );
 
+  const uniqueExercises = Object.keys(exerciseFrequency).length;
+
   return {
     totalWorkouts: workouts.length,
-    totalExercises,
-    totalVolume,
-    averageExercisesPerWorkout: (totalExercises / workouts.length).toFixed(1),
+    totalSets,
+    uniqueExercises,
+    averageSetsPerWorkout: (totalSets / workouts.length).toFixed(1),
     mostFrequentExercise: mostFrequentExercise.name || 'N/A',
+    mostFrequentExerciseCount: mostFrequentExercise.count || 0,
     dateRange: {
       from: new Date(workouts[workouts.length - 1]?.date).toISOString(),
       to: new Date(workouts[0]?.date).toISOString()
