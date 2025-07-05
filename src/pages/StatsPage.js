@@ -22,11 +22,16 @@ import {
   Snackbar,
   IconButton,
   Menu,
-  ListItemIcon
+  ListItemIcon,
+  Chip
 } from '@mui/material';
 import {
   GetApp as DownloadIcon,
-  MoreVert as MoreIcon
+  MoreVert as MoreIcon,
+  TrendingUp as TrendingUpIcon,
+  FitnessCenter as FitnessCenterIcon,
+  CalendarToday as CalendarIcon,
+  Update as UpdateIcon
 } from '@mui/icons-material';
 import {
   Chart as ChartJS,
@@ -55,7 +60,7 @@ ChartJS.register(
 function StatsPage() {
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
-  const [prs, setPrs] = useState({});
+  const [exerciseStats, setExerciseStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedExercise, setSelectedExercise] = useState('');
@@ -70,7 +75,7 @@ function StatsPage() {
         setError('');
         const data = getAllWorkouts();
         setWorkouts(data);
-        calculatePRs(data);
+        calculateExerciseStats(data);
         calculateExerciseData(data);
       } catch (error) {
         console.error('Error fetching workouts:', error);
@@ -82,33 +87,60 @@ function StatsPage() {
     fetchWorkouts();
   }, []);
 
-  const calculatePRs = (workouts) => {
-    const prMap = {};
+  const calculateExerciseStats = (workouts) => {
+    const statsMap = {};
+    
     workouts.forEach(workout => {
       workout.exercises.forEach(exercise => {
         const key = exercise.name.toLowerCase().trim();
-        let score;
         
-        if (exercise.weight === 'BW') {
-          // For bodyweight exercises, use reps as the score
-          score = exercise.reps;
-        } else {
-          // For weighted exercises, use weight * reps as the score
-          score = exercise.weight * exercise.reps;
+        if (!statsMap[key]) {
+          statsMap[key] = {
+            name: exercise.name,
+            highestWeight: { weight: exercise.weight, reps: exercise.reps, date: workout.date },
+            bestReps: { weight: exercise.weight, reps: exercise.reps, date: workout.date },
+            mostRecent: { weight: exercise.weight, reps: exercise.reps, date: workout.date },
+            frequency: 0,
+            totalSets: 0,
+            dates: new Set()
+          };
         }
         
-        if (!prMap[key] || score > prMap[key].score) {
-          prMap[key] = {
-            name: exercise.name,
-            score,
-            weight: exercise.weight,
-            reps: exercise.reps,
-            date: workout.date
-          };
+        const stats = statsMap[key];
+        stats.totalSets++;
+        stats.dates.add(workout.date);
+        
+        // Track highest weight (only for weighted exercises)
+        if (exercise.weight !== 'BW' && stats.highestWeight.weight !== 'BW') {
+          if (exercise.weight > stats.highestWeight.weight) {
+            stats.highestWeight = { weight: exercise.weight, reps: exercise.reps, date: workout.date };
+          }
+        }
+        
+        // Track best reps (for same weight or bodyweight exercises)
+        if (exercise.weight === 'BW' && stats.bestReps.weight === 'BW') {
+          if (exercise.reps > stats.bestReps.reps) {
+            stats.bestReps = { weight: exercise.weight, reps: exercise.reps, date: workout.date };
+          }
+        } else if (exercise.weight !== 'BW' && stats.bestReps.weight !== 'BW') {
+          if (exercise.weight === stats.bestReps.weight && exercise.reps > stats.bestReps.reps) {
+            stats.bestReps = { weight: exercise.weight, reps: exercise.reps, date: workout.date };
+          }
+        }
+        
+        // Track most recent (latest date)
+        if (new Date(workout.date) >= new Date(stats.mostRecent.date)) {
+          stats.mostRecent = { weight: exercise.weight, reps: exercise.reps, date: workout.date };
         }
       });
     });
-    setPrs(prMap);
+    
+    // Calculate frequency (unique workout dates)
+    Object.keys(statsMap).forEach(key => {
+      statsMap[key].frequency = statsMap[key].dates.size;
+    });
+    
+    setExerciseStats(statsMap);
   };
 
   const calculateExerciseData = (workouts) => {
@@ -127,8 +159,7 @@ function StatsPage() {
         exerciseMap[key].data.push({
           date: workout.date,
           weight: exercise.weight,
-          reps: exercise.reps,
-          volume: exercise.weight === 'BW' ? exercise.reps : exercise.weight * exercise.reps
+          reps: exercise.reps
         });
       });
     });
@@ -158,12 +189,14 @@ function StatsPage() {
     const exercise = exerciseData[exerciseKey];
     if (!exercise) return null;
 
+    const isBodyweight = exercise.data[0]?.weight === 'BW';
+    
     return {
       labels: exercise.data.map(d => new Date(d.date).toLocaleDateString()),
       datasets: [
         {
-          label: exercise.data[0]?.weight === 'BW' ? 'Reps' : 'Volume (lbs × reps)',
-          data: exercise.data.map(d => d.volume),
+          label: isBodyweight ? 'Reps' : 'Weight (lbs)',
+          data: exercise.data.map(d => isBodyweight ? d.reps : d.weight),
           borderColor: 'rgb(255, 99, 132)',
           backgroundColor: 'rgba(255, 99, 132, 0.2)',
           tension: 0.1
@@ -206,6 +239,14 @@ function StatsPage() {
     const daysDiff = (lastWorkout - firstWorkout) / (1000 * 60 * 60 * 24);
     const weeksActive = daysDiff / 7;
     return (workouts.length / weeksActive).toFixed(1) + ' per week';
+  };
+
+  const formatWeight = (weight) => {
+    return weight === 'BW' ? 'Bodyweight' : `${weight} lbs`;
+  };
+
+  const formatReps = (reps) => {
+    return `${reps} reps`;
   };
 
   const handleExportCSV = async () => {
@@ -392,39 +433,96 @@ function StatsPage() {
           </Paper>
         </Grid>
 
-        {/* Personal Records */}
+        {/* Exercise Statistics */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              Personal Records
+              Exercise Statistics
             </Typography>
-            {Object.keys(prs).length > 0 ? (
+            {Object.keys(exerciseStats).length > 0 ? (
               <List>
-                {Object.entries(prs).map(([key, data], index) => (
+                {Object.entries(exerciseStats).map(([key, stats], index) => (
                   <div key={key}>
                     {index > 0 && <Divider />}
-                    <ListItem>
-                      <ListItemText
-                        primary={data.name}
-                        secondary={
-                          <>
-                            <Typography component="span" variant="body2">
-                              {data.weight === 'BW' ? 'Bodyweight' : `${data.weight} lbs`} × {data.reps} reps
-                              {data.weight !== 'BW' && ` (${data.score} total volume)`}
+                    <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 3 }}>
+                      <Typography variant="h6" component="div" sx={{ mb: 2 }}>
+                        {stats.name}
+                      </Typography>
+                      
+                      <Grid container spacing={2}>
+                        {/* Highest Weight PR */}
+                        {stats.highestWeight.weight !== 'BW' && (
+                          <Grid item xs={12} sm={6} md={3}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                              <TrendingUpIcon sx={{ mr: 1, color: 'primary.main' }} />
+                              <Typography variant="body2" color="primary">
+                                Highest Weight
+                              </Typography>
+                            </Box>
+                            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                              {formatWeight(stats.highestWeight.weight)}
                             </Typography>
-                            <Typography component="div" variant="body2" color="text.secondary">
-                              Achieved on {new Date(data.date).toLocaleDateString()}
+                            <Typography variant="body2" color="text.secondary">
+                              {formatReps(stats.highestWeight.reps)} on {new Date(stats.highestWeight.date).toLocaleDateString()}
                             </Typography>
-                          </>
-                        }
-                      />
+                          </Grid>
+                        )}
+                        
+                        {/* Best Reps */}
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <FitnessCenterIcon sx={{ mr: 1, color: 'secondary.main' }} />
+                            <Typography variant="body2" color="secondary">
+                              Best Reps
+                            </Typography>
+                          </Box>
+                          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                            {formatReps(stats.bestReps.reps)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatWeight(stats.bestReps.weight)} on {new Date(stats.bestReps.date).toLocaleDateString()}
+                          </Typography>
+                        </Grid>
+                        
+                        {/* Frequency */}
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <CalendarIcon sx={{ mr: 1, color: 'success.main' }} />
+                            <Typography variant="body2" color="success.main">
+                              Frequency
+                            </Typography>
+                          </Box>
+                          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                            {stats.frequency} times
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {stats.totalSets} total sets
+                          </Typography>
+                        </Grid>
+                        
+                        {/* Most Recent */}
+                        <Grid item xs={12} sm={6} md={3}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <UpdateIcon sx={{ mr: 1, color: 'warning.main' }} />
+                            <Typography variant="body2" color="warning.main">
+                              Most Recent
+                            </Typography>
+                          </Box>
+                          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                            {formatWeight(stats.mostRecent.weight)} × {formatReps(stats.mostRecent.reps)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {new Date(stats.mostRecent.date).toLocaleDateString()}
+                          </Typography>
+                        </Grid>
+                      </Grid>
                     </ListItem>
                   </div>
                 ))}
               </List>
             ) : (
               <Typography variant="body2" color="text.secondary">
-                No personal records yet. Start adding workouts to track your progress!
+                No exercise statistics yet. Start adding workouts to track your progress!
               </Typography>
             )}
           </Paper>
