@@ -39,7 +39,7 @@ import {
   Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { getAllWorkouts } from '../utils/api';
+import { getAllWorkouts } from '../utils/localStorage';
 import { exportToCSV, exportToJSON } from '../utils/exportUtils';
 
 ChartJS.register(
@@ -68,7 +68,7 @@ function StatsPage() {
       try {
         setLoading(true);
         setError('');
-        const data = await getAllWorkouts();
+        const data = getAllWorkouts();
         setWorkouts(data);
         calculatePRs(data);
         calculateExerciseData(data);

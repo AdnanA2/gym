@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container,
@@ -13,17 +13,38 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { v4 as uuidv4 } from 'uuid';
-import { addWorkout, updateWorkout, getAllWorkouts } from '../utils/api';
+import { addWorkout, updateWorkout, getWorkoutById } from '../utils/localStorage';
 
 function AddWorkout() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [workout, setWorkout] = useState({
     date: new Date().toISOString().split('T')[0],
     bodyweight: '',
     exercises: [{ id: uuidv4(), name: '', weight: '', reps: '', notes: '' }]
   });
+
+  // Load existing workout if editing
+  useEffect(() => {
+    if (id) {
+      try {
+        const existingWorkout = getWorkoutById(id);
+        if (existingWorkout) {
+          setWorkout({
+            ...existingWorkout,
+            date: new Date(existingWorkout.date).toISOString().split('T')[0]
+          });
+        } else {
+          setError('Workout not found');
+        }
+      } catch (error) {
+        console.error('Error loading workout:', error);
+        setError('Failed to load workout for editing');
+      }
+    }
+  }, [id]);
 
   const handleExerciseChange = (index, field, value) => {
     const newExercises = [...workout.exercises];
@@ -66,6 +87,9 @@ function AddWorkout() {
     }
 
     try {
+      setLoading(true);
+      setError('');
+      
       const workoutData = {
         ...workout,
         bodyweight: Number(workout.bodyweight),
@@ -77,13 +101,16 @@ function AddWorkout() {
       };
 
       if (id) {
-        await updateWorkout(id, workoutData);
+        updateWorkout(id, workoutData);
       } else {
-        await addWorkout(workoutData);
+        addWorkout(workoutData);
       }
       navigate('/');
     } catch (error) {
+      console.error('Error saving workout:', error);
       setError('Failed to save workout. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -193,12 +220,14 @@ function AddWorkout() {
               variant="contained"
               color="primary"
               type="submit"
+              disabled={loading}
             >
-              {id ? 'Update Workout' : 'Save Workout'}
+              {loading ? 'Saving...' : (id ? 'Update Workout' : 'Save Workout')}
             </Button>
             <Button
               variant="outlined"
               onClick={() => navigate('/')}
+              disabled={loading}
             >
               Cancel
             </Button>

@@ -15,7 +15,7 @@ import {
   DialogActions,
   Alert
 } from '@mui/material';
-import { getAllWorkouts, deleteWorkout } from '../utils/api';
+import { getWorkoutById, deleteWorkout } from '../utils/localStorage';
 
 function WorkoutDetail() {
   const { id } = useParams();
@@ -27,14 +27,14 @@ function WorkoutDetail() {
   useEffect(() => {
     const fetchWorkout = async () => {
       try {
-        const workouts = await getAllWorkouts();
-        const foundWorkout = workouts.find(w => w.id === id);
+        const foundWorkout = getWorkoutById(id);
         if (foundWorkout) {
           setWorkout(foundWorkout);
         } else {
           setError('Workout not found');
         }
       } catch (error) {
+        console.error('Error loading workout:', error);
         setError('Failed to load workout');
       }
     };
@@ -43,15 +43,16 @@ function WorkoutDetail() {
 
   const handleDelete = async () => {
     try {
-      await deleteWorkout(id);
+      deleteWorkout(id);
       navigate('/');
     } catch (error) {
+      console.error('Error deleting workout:', error);
       setError('Failed to delete workout');
     }
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -90,7 +91,7 @@ function WorkoutDetail() {
         <Box>
           <Button
             variant="outlined"
-            onClick={() => navigate(`/add?id=${id}`)}
+            onClick={() => navigate(`/add/${id}`)}
             sx={{ mr: 2 }}
           >
             Edit

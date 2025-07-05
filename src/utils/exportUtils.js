@@ -47,12 +47,12 @@ export const exportToJSON = (workouts) => {
     exportDate: new Date().toISOString(),
     totalWorkouts: workouts.length,
     dateRange: {
-      from: workouts[workouts.length - 1]?.date,
-      to: workouts[0]?.date
+      from: new Date(workouts[workouts.length - 1]?.date).toISOString(),
+      to: new Date(workouts[0]?.date).toISOString()
     },
     workouts: workouts.map(workout => ({
       id: workout.id,
-      date: workout.date,
+      date: new Date(workout.date).toISOString(),
       bodyweight: workout.bodyweight,
       exercises: workout.exercises.map(exercise => ({
         name: exercise.name,
@@ -112,8 +112,8 @@ export const generateWorkoutSummary = (workouts) => {
     averageExercisesPerWorkout: (totalExercises / workouts.length).toFixed(1),
     mostFrequentExercise: mostFrequentExercise.name || 'N/A',
     dateRange: {
-      from: workouts[workouts.length - 1]?.date,
-      to: workouts[0]?.date
+      from: new Date(workouts[workouts.length - 1]?.date).toISOString(),
+      to: new Date(workouts[0]?.date).toISOString()
     }
   };
 }; 

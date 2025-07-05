@@ -28,6 +28,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/add" element={<AddWorkout />} />
+          <Route path="/add/:id" element={<AddWorkout />} />
           <Route path="/workout/:id" element={<WorkoutDetail />} />
           <Route path="/stats" element={<StatsPage />} />
         </Routes>
