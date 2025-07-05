@@ -46,6 +46,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import { getAllWorkouts } from '../utils/localStorage';
 import { exportToCSV, exportToJSON } from '../utils/exportUtils';
+import ImportData from '../components/ImportData';
 
 ChartJS.register(
   CategoryScale,
@@ -269,6 +270,20 @@ function StatsPage() {
     setExportMenuAnchor(null);
   };
 
+  const handleImportComplete = async () => {
+    try {
+      // Refetch workouts after import
+      const data = getAllWorkouts();
+      setWorkouts(data);
+      calculateExerciseStats(data);
+      calculateExerciseData(data);
+      setSnackbar({ open: true, message: 'Data imported successfully and page refreshed!', severity: 'success' });
+    } catch (error) {
+      console.error('Error refreshing data after import:', error);
+      setSnackbar({ open: true, message: 'Data imported but failed to refresh. Please refresh the page.', severity: 'warning' });
+    }
+  };
+
   if (loading) {
     return (
       <Container maxWidth="md" sx={{ py: 4, textAlign: 'center' }}>
@@ -333,6 +348,9 @@ function StatsPage() {
           Export as JSON
         </MenuItem>
       </Menu>
+
+      {/* Import Data Section */}
+      <ImportData onImport={handleImportComplete} />
 
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
