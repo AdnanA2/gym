@@ -60,33 +60,19 @@ ChartJS.register(
 
 function StatsPage() {
   const navigate = useNavigate();
-  const [workouts, setWorkouts] = useState([]);
+  const { workouts, loading, error, refreshWorkouts } = useWorkoutData();
   const [exerciseStats, setExerciseStats] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [selectedExercise, setSelectedExercise] = useState('');
   const [exerciseData, setExerciseData] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
 
   useEffect(() => {
-    const fetchWorkouts = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const data = getAllWorkouts();
-        setWorkouts(data);
-        calculateExerciseStats(data);
-        calculateExerciseData(data);
-      } catch (error) {
-        console.error('Error fetching workouts:', error);
-        setError('Failed to load workout statistics. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWorkouts();
-  }, []);
+    if (workouts.length > 0) {
+      calculateExerciseStats(workouts);
+      calculateExerciseData(workouts);
+    }
+  }, [workouts]);
 
   const calculateExerciseStats = (workouts) => {
     const statsMap = {};
