@@ -1,175 +1,170 @@
-import { 
-  collection, 
-  doc, 
-  getDocs, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
   getDoc,
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  orderBy, 
-  onSnapshot 
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { v4 as uuidv4 } from 'uuid';
 
-// Get user's workouts collection reference
-const getWorkoutsCollection = (userId) => {
-  return collection(db, 'users', userId, 'workouts');
-};
+const WORKOUTS_COLLECTION = 'workouts';
 
-// Get all workouts for a user, sorted by date (newest first)
+// Get all workouts for a user
 export const getAllWorkoutsFromFirestore = async (userId) => {
   try {
-    const workoutsRef = getWorkoutsCollection(userId);
-    const q = query(workoutsRef, orderBy('date', 'desc'));
+    const q = query(
+      collection(db, WORKOUTS_COLLECTION),
+      where('userId', '==', userId),
+      orderBy('date', 'desc')
+    );
     const querySnapshot = await getDocs(q);
-    
-    const workouts = [];
-    querySnapshot.forEach((doc) => {
-      workouts.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-    
-    return workouts;
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   } catch (error) {
-    console.error('Error fetching workouts from Firestore:', error);
-    throw new Error('Failed to fetch workouts');
+    console.error('Error getting workouts:', error);
+    throw error;
   }
 };
 
-// Add a new workout to Firestore
+// Add a new workout
 export const addWorkoutToFirestore = async (userId, workout) => {
   try {
-    const workoutsRef = getWorkoutsCollection(userId);
-    const newWorkout = {
+    const workoutData = {
       ...workout,
-      date: new Date(workout.date).toISOString(),
+      userId,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      date: new Date(workout.date).toISOString()
     };
     
-    const docRef = await addDoc(workoutsRef, newWorkout);
+    const docRef = await addDoc(collection(db, WORKOUTS_COLLECTION), workoutData);
     return {
       id: docRef.id,
-      ...newWorkout
-    };
-  } catch (error) {
-    console.error('Error adding workout to Firestore:', error);
-    throw new Error('Failed to add workout');
-  }
-};
-
-// Update an existing workout in Firestore
-export const updateWorkoutInFirestore = async (userId, workoutId, updatedWorkout) => {
-  try {
-    const workoutRef = doc(db, 'users', userId, 'workouts', workoutId);
-    const workoutData = {
-      ...updatedWorkout,
-      date: new Date(updatedWorkout.date).toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    await updateDoc(workoutRef, workoutData);
-    return {
-      id: workoutId,
       ...workoutData
     };
   } catch (error) {
-    console.error('Error updating workout in Firestore:', error);
-    throw new Error('Failed to update workout');
+    console.error('Error adding workout:', error);
+    throw error;
   }
 };
 
-// Delete a workout from Firestore
+// Update an existing workout
+export const updateWorkoutInFirestore = async (userId, workoutId, updatedWorkout) => {
+  try {
+    const workoutRef = doc(db, WORKOUTS_COLLECTION, workoutId);
+    const updateData = {
+      ...updatedWorkout,
+      userId,
+      updatedAt: new Date().toISOString(),
+      date: new Date(updatedWorkout.date).toISOString()
+    };
+    
+    await updateDoc(workoutRef, updateData);
+    return {
+      id: workoutId,
+      ...updateData
+    };
+  } catch (error) {
+    console.error('Error updating workout:', error);
+    throw error;
+  }
+};
+
+// Delete a workout
 export const deleteWorkoutFromFirestore = async (userId, workoutId) => {
   try {
-    const workoutRef = doc(db, 'users', userId, 'workouts', workoutId);
+    const workoutRef = doc(db, WORKOUTS_COLLECTION, workoutId);
     await deleteDoc(workoutRef);
     return workoutId;
   } catch (error) {
-    console.error('Error deleting workout from Firestore:', error);
-    throw new Error('Failed to delete workout');
+    console.error('Error deleting workout:', error);
+    throw error;
   }
 };
 
-// Get a single workout by ID from Firestore
+// Get a single workout by ID
 export const getWorkoutByIdFromFirestore = async (userId, workoutId) => {
   try {
-    const workoutRef = doc(db, 'users', userId, 'workouts', workoutId);
-    const docSnap = await getDoc(workoutRef);
+    const workoutRef = doc(db, WORKOUTS_COLLECTION, workoutId);
+    const workoutDoc = await getDoc(workoutRef);
     
-    if (docSnap.exists()) {
-      return {
-        id: docSnap.id,
-        ...docSnap.data()
-      };
+    if (workoutDoc.exists()) {
+      const data = workoutDoc.data();
+      if (data.userId === userId) {
+        return {
+          id: workoutDoc.id,
+          ...data
+        };
+      } else {
+        throw new Error('Workout not found or access denied');
+      }
     } else {
-      return null;
+      throw new Error('Workout not found');
     }
   } catch (error) {
-    console.error('Error fetching workout from Firestore:', error);
-    throw new Error('Failed to fetch workout');
+    console.error('Error getting workout:', error);
+    throw error;
   }
 };
 
-// Set up real-time listener for user's workouts
+// Subscribe to real-time workout updates
 export const subscribeToWorkouts = (userId, callback) => {
   try {
-    const workoutsRef = getWorkoutsCollection(userId);
-    const q = query(workoutsRef, orderBy('date', 'desc'));
+    const q = query(
+      collection(db, WORKOUTS_COLLECTION),
+      where('userId', '==', userId),
+      orderBy('date', 'desc')
+    );
     
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const workouts = [];
-      querySnapshot.forEach((doc) => {
-        workouts.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-      callback(workouts);
+    return onSnapshot(q, (querySnapshot) => {
+      const workouts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      callback(workouts, null);
     }, (error) => {
-      console.error('Error in workouts listener:', error);
+      console.error('Error in workout subscription:', error);
       callback(null, error);
     });
-    
-    return unsubscribe;
   } catch (error) {
-    console.error('Error setting up workouts listener:', error);
-    throw new Error('Failed to set up workouts listener');
+    console.error('Error setting up workout subscription:', error);
+    callback(null, error);
   }
 };
 
-// Sync localStorage workouts to Firestore (for migration when user logs in)
+// Sync localStorage workouts to Firestore
 export const syncLocalStorageToFirestore = async (userId, localWorkouts) => {
   try {
-    const workoutsRef = getWorkoutsCollection(userId);
+    const batch = writeBatch(db);
     
-    // Add each local workout to Firestore
-    const syncPromises = localWorkouts.map(async (workout) => {
+    for (const workout of localWorkouts) {
       const workoutData = {
         ...workout,
-        // Remove the old UUID and let Firestore generate new ID
-        // Keep the original date and data intact
-        date: new Date(workout.date).toISOString(),
-        createdAt: new Date().toISOString(),
+        userId,
+        createdAt: workout.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        migratedFromLocal: true
+        date: new Date(workout.date).toISOString()
       };
       
-      // Remove the old local ID since Firestore will generate a new one
+      // Remove the local ID as Firestore will generate its own
       delete workoutData.id;
       
-      return await addDoc(workoutsRef, workoutData);
-    });
+      const newWorkoutRef = doc(collection(db, WORKOUTS_COLLECTION));
+      batch.set(newWorkoutRef, workoutData);
+    }
     
-    await Promise.all(syncPromises);
-    console.log(`Successfully synced ${localWorkouts.length} workouts to Firestore`);
-    return true;
+    await batch.commit();
+    console.log('Successfully synced local workouts to Firestore');
   } catch (error) {
-    console.error('Error syncing localStorage to Firestore:', error);
-    throw new Error('Failed to sync workouts to Firestore');
+    console.error('Error syncing to Firestore:', error);
+    throw error;
   }
 }; 
