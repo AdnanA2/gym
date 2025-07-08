@@ -44,7 +44,7 @@ import {
   Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { getAllWorkouts } from '../utils/localStorage';
+import { useWorkoutData } from '../contexts/WorkoutDataContext';
 import { exportToCSV, exportToJSON } from '../utils/exportUtils';
 import ImportData from '../components/ImportData';
 

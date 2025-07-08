@@ -20,14 +20,17 @@ import { useWorkoutData } from '../contexts/WorkoutDataContext';
 function WorkoutDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getWorkoutById, deleteWorkout } = useWorkoutData();
   const [workout, setWorkout] = useState(null);
   const [error, setError] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchWorkout = async () => {
       try {
-        const foundWorkout = getWorkoutById(id);
+        setLoading(true);
+        const foundWorkout = await getWorkoutById(id);
         if (foundWorkout) {
           setWorkout(foundWorkout);
         } else {
@@ -36,14 +39,16 @@ function WorkoutDetail() {
       } catch (error) {
         console.error('Error loading workout:', error);
         setError('Failed to load workout');
+      } finally {
+        setLoading(false);
       }
     };
     fetchWorkout();
-  }, [id]);
+  }, [id, getWorkoutById]);
 
   const handleDelete = async () => {
     try {
-      deleteWorkout(id);
+      await deleteWorkout(id);
       navigate('/');
     } catch (error) {
       console.error('Error deleting workout:', error);
@@ -74,10 +79,25 @@ function WorkoutDetail() {
     );
   }
 
-  if (!workout) {
+  if (loading) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Typography>Loading...</Typography>
+      </Container>
+    );
+  }
+
+  if (!workout) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="error">Workout not found</Alert>
+        <Button
+          variant="contained"
+          onClick={() => navigate('/')}
+          sx={{ mt: 2 }}
+        >
+          Back to Home
+        </Button>
       </Container>
     );
   }
