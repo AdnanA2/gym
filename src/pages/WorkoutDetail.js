@@ -15,7 +15,7 @@ import {
   DialogActions,
   Alert
 } from '@mui/material';
-import { getWorkoutById, deleteWorkout } from '../utils/localStorage';
+import { useWorkoutData } from '../contexts/WorkoutDataContext';
 
 function WorkoutDetail() {
   const { id } = useParams();

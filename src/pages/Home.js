@@ -15,30 +15,11 @@ import {
   Skeleton
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { getAllWorkouts } from '../utils/localStorage';
+import { useWorkoutData } from '../contexts/WorkoutDataContext';
 
 function Home() {
-  const [workouts, setWorkouts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { workouts, loading, error, syncing } = useWorkoutData();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchWorkouts = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const data = getAllWorkouts();
-        setWorkouts(data);
-      } catch (error) {
-        console.error('Error fetching workouts:', error);
-        setError('Failed to load workouts. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWorkouts();
-  }, []);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -78,6 +59,12 @@ function Home() {
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
+        </Alert>
+      )}
+
+      {syncing && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Syncing your workouts to the cloud...
         </Alert>
       )}
 

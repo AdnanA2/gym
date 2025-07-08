@@ -13,11 +13,12 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { v4 as uuidv4 } from 'uuid';
-import { addWorkout, updateWorkout, getWorkoutById } from '../utils/localStorage';
+import { useWorkoutData } from '../contexts/WorkoutDataContext';
 
 function AddWorkout() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { addWorkout, editWorkout, getWorkoutById } = useWorkoutData();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [workout, setWorkout] = useState({
@@ -29,22 +30,25 @@ function AddWorkout() {
   // Load existing workout if editing
   useEffect(() => {
     if (id) {
-      try {
-        const existingWorkout = getWorkoutById(id);
-        if (existingWorkout) {
-          setWorkout({
-            ...existingWorkout,
-            date: new Date(existingWorkout.date).toISOString().split('T')[0]
-          });
-        } else {
-          setError('Workout not found');
+      const loadWorkout = async () => {
+        try {
+          const existingWorkout = await getWorkoutById(id);
+          if (existingWorkout) {
+            setWorkout({
+              ...existingWorkout,
+              date: new Date(existingWorkout.date).toISOString().split('T')[0]
+            });
+          } else {
+            setError('Workout not found');
+          }
+        } catch (error) {
+          console.error('Error loading workout:', error);
+          setError('Failed to load workout for editing');
         }
-      } catch (error) {
-        console.error('Error loading workout:', error);
-        setError('Failed to load workout for editing');
-      }
+      };
+      loadWorkout();
     }
-  }, [id]);
+  }, [id, getWorkoutById]);
 
   const handleExerciseChange = (index, field, value) => {
     const newExercises = [...workout.exercises];
@@ -101,9 +105,9 @@ function AddWorkout() {
       };
 
       if (id) {
-        updateWorkout(id, workoutData);
+        await editWorkout(id, workoutData);
       } else {
-        addWorkout(workoutData);
+        await addWorkout(workoutData);
       }
       navigate('/');
     } catch (error) {
