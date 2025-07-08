@@ -258,11 +258,8 @@ function StatsPage() {
 
   const handleImportComplete = async () => {
     try {
-      // Refetch workouts after import
-      const data = getAllWorkouts();
-      setWorkouts(data);
-      calculateExerciseStats(data);
-      calculateExerciseData(data);
+      // Refresh workouts after import
+      await refreshWorkouts();
       setSnackbar({ open: true, message: 'Data imported successfully and page refreshed!', severity: 'success' });
     } catch (error) {
       console.error('Error refreshing data after import:', error);
