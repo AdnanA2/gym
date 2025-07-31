@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import { syncLocalWorkoutsToFirestore } from '../utils/syncUtils';
+import { useToast } from './ToastContext';
 
 // Create the AuthContext
 const AuthContext = createContext({});
@@ -25,14 +26,12 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [syncStatus, setSyncStatus] = useState(null); // Track sync status
   const [hasSyncedThisSession, setHasSyncedThisSession] = useState(false); // Prevent duplicate syncs
+  
+  const { showSuccess, showError, showInfo } = useToast();
 
   // Clear error helper function
   const clearError = () => setError('');
-
-  // Clear sync status helper function
-  const clearSyncStatus = () => setSyncStatus(null);
 
   // Signup function
   async function signup(email, password) {
@@ -71,7 +70,6 @@ export function AuthProvider({ children }) {
       await signOut(auth);
       // Reset sync status when logging out
       setHasSyncedThisSession(false);
-      setSyncStatus(null);
     } catch (error) {
       setError(error.message);
       throw error;
@@ -86,37 +84,24 @@ export function AuthProvider({ children }) {
 
     try {
       console.log('Starting workout sync for user:', user.uid);
-      setSyncStatus({ loading: true, message: 'Syncing local workouts...' });
+      showInfo('Syncing local workouts to cloud...');
       
       const syncResult = await syncLocalWorkoutsToFirestore(user.uid);
-      
-      setSyncStatus({
-        loading: false,
-        success: true,
-        ...syncResult
-      });
       
       setHasSyncedThisSession(true);
       
       console.log('Workout sync completed:', syncResult);
       
-      // Clear sync status after 5 seconds
-      setTimeout(() => {
-        setSyncStatus(null);
-      }, 5000);
+      // Show appropriate success message
+      if (syncResult.synced > 0 || syncResult.skipped > 0) {
+        showSuccess(syncResult.message);
+      } else {
+        showInfo(syncResult.message);
+      }
       
     } catch (error) {
       console.error('Workout sync failed:', error);
-      setSyncStatus({
-        loading: false,
-        success: false,
-        message: `Sync failed: ${error.message}`
-      });
-      
-      // Clear error status after 10 seconds
-      setTimeout(() => {
-        setSyncStatus(null);
-      }, 10000);
+      showError(`Workout sync failed: ${error.message}`);
     }
   };
 
@@ -129,31 +114,31 @@ export function AuthProvider({ children }) {
       
       // If user just logged in (was unauthenticated and now has user), sync workouts
       if (user && wasUnauthenticated) {
-        await handleWorkoutSync(user);
+        // Small delay to ensure UI has loaded before showing sync messages
+        setTimeout(() => {
+          handleWorkoutSync(user);
+        }, 500);
       }
       
       // Reset sync session flag when user logs out
       if (!user) {
         setHasSyncedThisSession(false);
-        setSyncStatus(null);
       }
     });
 
     // Cleanup subscription on unmount
     return unsubscribe;
-  }, [currentUser]); // Add currentUser as dependency to track state changes
+  }, [currentUser, showSuccess, showError, showInfo]); // Add toast functions as dependencies
 
   // Context value
   const value = {
     currentUser,
     loading,
     error,
-    syncStatus,
     signup,
     login,
     logout,
-    clearError,
-    clearSyncStatus
+    clearError
   };
 
   return (
