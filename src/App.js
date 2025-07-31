@@ -31,8 +31,8 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <WorkoutDataProvider>
-          <ToastProvider>
+        <ToastProvider>
+          <WorkoutDataProvider>
             <ThemeProvider theme={theme}>
               <CssBaseline />
               <BrowserRouter>
@@ -79,8 +79,8 @@ function App() {
             </Routes>
           </BrowserRouter>
         </ThemeProvider>
-        </ToastProvider>
-      </WorkoutDataProvider>
+        </WorkoutDataProvider>
+      </ToastProvider>
     </AuthProvider>
     </ErrorBoundary>
   );
