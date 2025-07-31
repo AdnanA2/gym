@@ -30,8 +30,8 @@ const theme = createTheme({
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ToastProvider>
+      <ToastProvider>
+        <AuthProvider>
           <WorkoutDataProvider>
             <ThemeProvider theme={theme}>
               <CssBaseline />
@@ -80,8 +80,8 @@ function App() {
           </BrowserRouter>
         </ThemeProvider>
         </WorkoutDataProvider>
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
     </ErrorBoundary>
   );
 }
