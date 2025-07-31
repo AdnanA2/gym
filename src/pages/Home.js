@@ -62,11 +62,7 @@ function Home() {
         </Alert>
       )}
 
-      {syncing && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Syncing your workouts to the cloud...
-        </Alert>
-      )}
+
 
       {loading ? (
         <LoadingSkeleton />

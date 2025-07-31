@@ -3,11 +3,17 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './contexts/AuthContext';
 import { WorkoutDataProvider } from './contexts/WorkoutDataContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Navbar from './components/Layout/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import AddWorkout from './pages/AddWorkout';
 import WorkoutDetail from './pages/WorkoutDetail';
 import StatsPage from './pages/StatsPage';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 const theme = createTheme({
   palette: {
@@ -23,23 +29,60 @@ const theme = createTheme({
 
 function App() {
   return (
-    <AuthProvider>
-      <WorkoutDataProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <BrowserRouter>
+    <ErrorBoundary>
+      <AuthProvider>
+        <WorkoutDataProvider>
+          <ToastProvider>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              <BrowserRouter>
             <Navbar />
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/add" element={<AddWorkout />} />
-              <Route path="/add/:id" element={<AddWorkout />} />
-              <Route path="/workout/:id" element={<WorkoutDetail />} />
-              <Route path="/stats" element={<StatsPage />} />
+              {/* Public routes - redirect to home if already logged in */}
+              <Route path="/login" element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              } />
+              <Route path="/signup" element={
+                <PublicRoute>
+                  <Signup />
+                </PublicRoute>
+              } />
+              
+              {/* Protected routes - require authentication */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="/add" element={
+                <ProtectedRoute>
+                  <AddWorkout />
+                </ProtectedRoute>
+              } />
+              <Route path="/add/:id" element={
+                <ProtectedRoute>
+                  <AddWorkout />
+                </ProtectedRoute>
+              } />
+              <Route path="/workout/:id" element={
+                <ProtectedRoute>
+                  <WorkoutDetail />
+                </ProtectedRoute>
+              } />
+              <Route path="/stats" element={
+                <ProtectedRoute>
+                  <StatsPage />
+                </ProtectedRoute>
+              } />
             </Routes>
           </BrowserRouter>
         </ThemeProvider>
+        </ToastProvider>
       </WorkoutDataProvider>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

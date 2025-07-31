@@ -5,23 +5,57 @@ import {
   Typography,
   Button,
   IconButton,
-  Box
+  Box,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import {
   Home as HomeIcon,
   Add as AddIcon,
-  BarChart as StatsIcon
+  BarChart as StatsIcon,
+  AccountCircle as AccountIcon,
+  Login as LoginIcon,
+  PersonAdd as SignupIcon
 } from '@mui/icons-material';
+import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser, logout } = useAuth();
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  const navItems = [
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      handleClose();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const authenticatedNavItems = [
     { label: 'Home', icon: <HomeIcon />, path: '/' },
     { label: 'Add Workout', icon: <AddIcon />, path: '/add' },
     { label: 'Stats', icon: <StatsIcon />, path: '/stats' }
   ];
+
+  const unauthenticatedNavItems = [
+    { label: 'Login', icon: <LoginIcon />, path: '/login' },
+    { label: 'Sign Up', icon: <SignupIcon />, path: '/signup' }
+  ];
+
+  const navItems = currentUser ? authenticatedNavItems : unauthenticatedNavItems;
 
   return (
     <AppBar position="static" color="primary">
@@ -83,6 +117,40 @@ const Navbar = () => {
             </IconButton>
           ))}
         </Box>
+
+        {/* Account menu for authenticated users */}
+        {currentUser && (
+          <Box sx={{ ml: 2 }}>
+            <IconButton
+              size="large"
+              onClick={handleMenu}
+              color="inherit"
+            >
+              <AccountIcon />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+            >
+              <MenuItem onClick={handleClose} disabled>
+                {currentUser.email}
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                Logout
+              </MenuItem>
+            </Menu>
+          </Box>
+        )}
       </Toolbar>
     </AppBar>
   );

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 import {
   getAllWorkoutsFromFirestore,
   addWorkoutToFirestore,
@@ -33,6 +34,7 @@ export function useWorkoutData() {
 // WorkoutDataProvider component
 export function WorkoutDataProvider({ children }) {
   const { currentUser, loading: authLoading } = useAuth();
+  const { showError, showSuccess, showInfo } = useToast();
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -73,21 +75,23 @@ export function WorkoutDataProvider({ children }) {
       const localWorkouts = getAllWorkoutsFromLocal();
       
       if (localWorkouts.length > 0) {
+        showInfo(`Syncing ${localWorkouts.length} workout${localWorkouts.length !== 1 ? 's' : ''} to cloud...`);
         await syncLocalStorageToFirestore(currentUser.uid, localWorkouts);
         // Clear localStorage after successful sync
         clearAllWorkouts();
-        console.log('Successfully synced local workouts to Firestore');
+        showSuccess('Your local workouts have been synced to the cloud!');
       }
       
       // Reload from Firestore to get the synced data
       await loadWorkouts();
     } catch (error) {
       console.error('Error syncing to Firestore:', error);
+      showError('Failed to sync your data to cloud storage. Your local data is safe.');
       setError('Failed to sync your data to cloud storage. Your local data is safe.');
     } finally {
       setSyncing(false);
     }
-  }, [currentUser, loadWorkouts]);
+  }, [currentUser, loadWorkouts, showError, showSuccess, showInfo]);
 
   // Set up real-time listener for Firestore when user is logged in
   useEffect(() => {
@@ -146,17 +150,21 @@ export function WorkoutDataProvider({ children }) {
       if (currentUser) {
         // User is logged in - save to Firestore
         const newWorkout = await addWorkoutToFirestore(currentUser.uid, workout);
+        showSuccess('Workout saved successfully!');
         // Firestore listener will update state automatically
         return newWorkout;
       } else {
         // User not logged in - save to localStorage
         const newWorkout = addWorkoutToLocal(workout);
         setWorkouts(prev => [newWorkout, ...prev.filter(w => w.id !== newWorkout.id)].sort((a, b) => new Date(b.date) - new Date(a.date)));
+        showSuccess('Workout saved locally!');
         return newWorkout;
       }
     } catch (error) {
       console.error('Error adding workout:', error);
-      setError('Failed to save workout. Please try again.');
+      const errorMessage = 'Failed to save workout. Please try again.';
+      showError(errorMessage);
+      setError(errorMessage);
       throw error;
     }
   };
@@ -169,17 +177,21 @@ export function WorkoutDataProvider({ children }) {
       if (currentUser) {
         // User is logged in - update in Firestore
         const updated = await updateWorkoutInFirestore(currentUser.uid, id, updatedWorkout);
+        showSuccess('Workout updated successfully!');
         // Firestore listener will update state automatically
         return updated;
       } else {
         // User not logged in - update in localStorage
         const updated = updateWorkoutInLocal(id, updatedWorkout);
         setWorkouts(prev => prev.map(w => w.id === id ? updated : w).sort((a, b) => new Date(b.date) - new Date(a.date)));
+        showSuccess('Workout updated locally!');
         return updated;
       }
     } catch (error) {
       console.error('Error updating workout:', error);
-      setError('Failed to update workout. Please try again.');
+      const errorMessage = 'Failed to update workout. Please try again.';
+      showError(errorMessage);
+      setError(errorMessage);
       throw error;
     }
   };
@@ -192,17 +204,21 @@ export function WorkoutDataProvider({ children }) {
       if (currentUser) {
         // User is logged in - delete from Firestore
         await deleteWorkoutFromFirestore(currentUser.uid, id);
+        showSuccess('Workout deleted successfully!');
         // Firestore listener will update state automatically
       } else {
         // User not logged in - delete from localStorage
         deleteWorkoutFromLocal(id);
         setWorkouts(prev => prev.filter(w => w.id !== id));
+        showSuccess('Workout deleted!');
       }
       
       return id;
     } catch (error) {
       console.error('Error deleting workout:', error);
-      setError('Failed to delete workout. Please try again.');
+      const errorMessage = 'Failed to delete workout. Please try again.';
+      showError(errorMessage);
+      setError(errorMessage);
       throw error;
     }
   };
