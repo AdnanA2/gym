@@ -102,7 +102,23 @@ export function WorkoutDataProvider({ children }) {
     const setupFirestoreListener = async () => {
       try {
         // First sync any local data to Firestore
-        await syncToFirestore();
+        const localWorkouts = getAllWorkoutsFromLocal();
+        if (localWorkouts.length > 0) {
+          try {
+            setSyncing(true);
+            showInfo(`Syncing ${localWorkouts.length} workout${localWorkouts.length !== 1 ? 's' : ''} to cloud...`);
+            await syncLocalStorageToFirestore(currentUser.uid, localWorkouts);
+            // Clear localStorage after successful sync
+            clearAllWorkouts();
+            showSuccess('Your local workouts have been synced to the cloud!');
+          } catch (error) {
+            console.error('Error syncing to Firestore:', error);
+            showError('Failed to sync your data to cloud storage. Your local data is safe.');
+            setError('Failed to sync your data to cloud storage. Your local data is safe.');
+          } finally {
+            setSyncing(false);
+          }
+        }
         
         // Then set up real-time listener
         unsubscribe = subscribeToWorkouts(currentUser.uid, (workouts, error) => {
@@ -129,7 +145,7 @@ export function WorkoutDataProvider({ children }) {
         unsubscribe();
       }
     };
-  }, [currentUser, authLoading, syncToFirestore]);
+  }, [currentUser, authLoading, showError, showSuccess, showInfo]);
 
   // Load workouts when not logged in or when auth state changes
   useEffect(() => {

@@ -2,9 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write their own workout data
-    match /users/{userId}/workouts/{workoutId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Allow users to read and write their own workouts in the workouts collection
+    match /workouts/{workoutId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
     // Allow users to read and write their own user profile data
